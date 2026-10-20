@@ -1,0 +1,1056 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Constitution Challenge</title>
+    <style>
+      :root {
+        --ink: #17223b;
+        --gold: #ffd166;
+        --green: #16865b;
+        --red: #b92d3b;
+        --paper: #fffdf4;
+      }
+      * { box-sizing: border-box; }
+      body { background:linear-gradient(135deg,#087fbd,#075e73 55%,#073b58); }
+      .top h1 { text-shadow:2px 3px 0 #63300f,0 0 14px #001e3e; }
+      .score { border:3px solid #f7c54b; box-shadow:0 4px 0 #7c3a12; background:linear-gradient(#fff6cf,#ffd879); }
+      .map-wrap { border:7px solid #8b4518; outline:3px solid #f7d36b; border-radius:22px; box-shadow:0 12px 0 #5a2a10,0 18px 38px #001c3c88; }
+      .node { box-shadow:0 4px 0 #74290f,0 0 0 3px #ffdf74; }
+      .node.available { background:#ffbd2e; color:#4a2108; }
+      .node.completed { background:#16865b; }
+      body {
+        margin: 0;
+        font-family:
+          system-ui,
+          -apple-system,
+          Segoe UI,
+          sans-serif;
+        background: linear-gradient(135deg, #102b4e, #176b78);
+        color: var(--ink);
+        min-height: 100vh;
+      }
+      .wrap {
+        max-width: 1100px;
+        margin: auto;
+        padding: 18px;
+      }
+      .top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        color: white;
+        margin-bottom: 14px;
+      }
+      .top h1 {
+        font-size: clamp(20px, 3vw, 32px);
+        margin: 0;
+      }
+      .score {
+        background: #fff;
+        color: #102b4e;
+        border-radius: 999px;
+        padding: 9px 14px;
+        font-weight: 800;
+      }
+      .map-wrap {
+        position: relative;
+        border: 5px solid #f9d36a;
+        border-radius: 18px;
+        overflow: hidden;
+        box-shadow: 0 12px 35px #0005;
+        background: #fff;
+      }
+      .map {
+        display: block;
+        width: 100%;
+        height: auto;
+        min-height: 420px;
+        object-fit: cover;
+      }
+      .node {
+        position: absolute;
+        transform: translate(-50%, -50%);
+        width: clamp(34px, 5vw, 55px);
+        height: clamp(34px, 5vw, 55px);
+        border: 3px solid white;
+        border-radius: 50%;
+        background: #b92d3b;
+        color: white;
+        font-size: clamp(13px, 2vw, 19px);
+        font-weight: 900;
+        box-shadow: 0 3px 8px #0006;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .node.open {
+        background: #ffcc33;
+        color: #17324f;
+      }
+      .node.done {
+        background: #16865b;
+      }
+      .node:disabled {
+        opacity: 0.78;
+        cursor: not-allowed;
+      }
+      .hint {
+        color: #fff;
+        margin: 12px 2px 0;
+        font-size: 14px;
+      }
+      .overlay {
+        position: fixed;
+        inset: 0;
+        background: #061528c9;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 14px;
+        z-index: 5;
+        overflow: auto;
+      }
+      .panel {
+        background: var(--paper);
+        width: min(760px, 100%);
+        max-height: 95vh;
+        overflow: auto;
+        border-radius: 20px;
+        padding: clamp(18px, 4vw, 30px);
+        box-shadow: 0 18px 55px #0008;
+      }
+      .panel h2 {
+        margin: 0 0 12px;
+        color: #103b59;
+      }
+      .stim {
+        width: 100%;
+        max-height: 280px;
+        object-fit: contain;
+        border-radius: 12px;
+        margin: 4px 0 12px;
+      }
+      .question {
+        font-size: clamp(17px, 2.5vw, 21px);
+        line-height: 1.55;
+        margin: 8px 0 18px;
+      }
+      .answers {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 10px;
+      }
+      .ans {
+        border: 2px solid #c9d4df;
+        border-radius: 12px;
+        background: white;
+        padding: 12px;
+        cursor: pointer;
+        font-weight: 700;
+        color: #19344c;
+        min-height: 54px;
+      }
+      .ans.selected {
+        border-color: #0c8b69;
+        background: #d9f8eb;
+      }
+      .ans img {
+        width: 100%;
+        height: 130px;
+        object-fit: contain;
+      }
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 18px;
+      }
+      .btn {
+        border: 0;
+        border-radius: 10px;
+        padding: 11px 16px;
+        font-weight: 800;
+        cursor: pointer;
+        background: #123e5a;
+        color: white;
+      }
+      .btn.primary {
+        background: #16865b;
+      }
+      .btn.light {
+        background: #e4ebf1;
+        color: #19344c;
+      }
+      .feedback {
+        font-weight: 800;
+        margin-top: 14px;
+      }
+      .feedback.good {
+        color: #08794e;
+      }
+      .feedback.bad {
+        color: #b92d3b;
+      }
+      .start {
+        position: fixed; inset: 0; z-index: 10; display: flex; align-items: center;
+        justify-content: center; padding: 20px; overflow: auto;
+        background: #063c67;
+      }
+      .start-video { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; object-position:center center; background:#063c67; }
+      .start-shade { position:absolute; inset:0; background:linear-gradient(90deg,rgba(3,27,53,.04),rgba(3,27,53,.10)); pointer-events:none; }
+      .start-card {
+        display:none;
+        position:relative; z-index:1; width:min(590px,100%); text-align:center; color:#49200b;
+        background:linear-gradient(145deg,rgba(255,244,203,.97),rgba(255,205,111,.95));
+        border:5px solid #8a451a; outline:3px solid #f9d76b; border-radius:28px;
+        padding:clamp(22px,4vw,42px); box-shadow:0 16px 0 #55260e,0 24px 55px #001c3c99;
+      }
+      .start-card:before { content:"✦  PETUALANGAN EDUKATIF  ✦"; display:block; font-size:clamp(11px,1.6vw,15px); font-weight:1000; letter-spacing:2px; color:#9a4818; margin-bottom:12px; }
+      .start-card h1 { font-size:clamp(29px,5vw,51px); line-height:1.02; margin:0 0 12px; color:#4a210d; text-shadow:1px 2px #ffefad; }
+      .start-card p { line-height:1.55; margin:0 0 18px; font-weight:650; }
+      .start-fields { display:grid; gap:8px; text-align:left; margin:18px 0; }
+      .start-fields label { font-weight:900; color:#54270f; }
+      .start-fields input { width:100%; border:2px solid #b76a2b; border-radius:12px; padding:13px 14px; background:#fffdf4; color:#39200f; font:inherit; }
+      .start .btn { width:100%; margin-top:9px; border:3px solid #79380f; border-radius:999px; padding:14px 18px; font-size:16px; box-shadow:0 4px 0 #71310c; }
+      .start .btn.primary { background:linear-gradient(#ffe56d,#ffad20); color:#4d2108; }
+      .start .btn.light { background:#fff6d8; color:#51280f; }
+      .start-hotspot {
+        position:absolute; z-index:3; left:50%; top:82%; transform:translate(-50%,-50%);
+        width:min(29vw,390px); height:10vh; min-height:46px; max-height:90px;
+        border:0; border-radius:999px; background:transparent; cursor:pointer;
+        color:transparent; font-size:0;
+      }
+      .start-hotspot:focus-visible { outline:4px solid #fff; outline-offset:4px; }
+      .start-teacher {
+        position:absolute; z-index:4; top:16px; right:18px; border:2px solid #79380f;
+        border-radius:999px; padding:9px 16px; background:#fff6d8; color:#51280f;
+        font-weight:900; cursor:pointer; box-shadow:0 3px 0 #71310c;
+      }
+      .start-card.form-open { display:block; }
+      .start-card.form-open #landingActions { display:none; }
+      .start-card.form-open #studentForm { display:grid !important; }
+      @media (max-width:600px) {
+        .start-hotspot { top:82%; width:48vw; height:9vh; }
+        .start-teacher { top:10px; right:10px; padding:7px 11px; }
+      }
+      .finish {
+        display: none;
+        text-align: center;
+        color: white;
+        padding: 35px;
+      }
+      .finish h2 {
+        font-size: 32px;
+      }
+      .small {
+        font-size: 13px;
+        color: #607287;
+      }
+
+      .start-fields { display: grid; gap: 12px; max-width: 420px; margin: 22px auto 14px; text-align: left; }
+      .start-fields label { display: grid; gap: 6px; font-weight: 750; }
+      .start-fields input { width: 100%; border: 1px solid #d2deea; border-radius: 10px; padding: 12px 13px; font: inherit; color: #17223b; }
+      .top-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+      .teacher-overlay { position: fixed; inset: 0; z-index: 30; display: none; background: #061528eF; padding: 16px; overflow: auto; align-items: flex-start; justify-content: center; }
+      .teacher-panel { width: min(1100px, 100%); background: #fffdf4; border-radius: 18px; padding: clamp(16px, 3vw, 28px); margin: auto; color: #17223b; }
+      .teacher-panel h2 { margin-top: 0; }
+      .teacher-toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 12px 0; }
+      .teacher-toolbar input { padding: 10px; border: 1px solid #c9d4df; border-radius: 9px; min-width: 200px; }
+      .table-wrap { overflow-x: auto; }
+      .scores-table { width: 100%; border-collapse: collapse; min-width: 720px; background: white; }
+      .scores-table th, .scores-table td { padding: 10px; border-bottom: 1px solid #dce4eb; text-align: left; font-size: 14px; }
+      .scores-table th { background: #eaf1f6; }
+      .teacher-note { font-size: 13px; color: #52677a; }
+      .status-msg { margin: 8px 0; font-weight: 700; }
+      .btn.danger { background: #b92d3b; }
+      .btn.secondary { background: #52677a; }
+
+      @media (max-width: 600px) {
+        .wrap {
+          padding: 10px;
+        }
+        .map {
+          min-height: 300px;
+        }
+        .hint {
+          font-size: 12px;
+        }
+        .top {
+          align-items: flex-start;
+        }
+      }
+
+      .instructions-overlay { position: fixed; inset: 0; z-index: 25; display: none; align-items: center; justify-content: center; padding: 12px; background: rgba(3, 15, 31, .94); overflow: auto; }
+      .instructions-panel { width: min(1200px, 100%); max-height: 96vh; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+      .instructions-image { display: block; width: 100%; max-height: calc(96vh - 76px); object-fit: contain; border-radius: 12px; box-shadow: 0 12px 36px #0008; }
+      .instructions-actions { display: flex; justify-content: center; width: 100%; }
+      @media (max-width: 600px) { .start { padding:12px; } .start-card { padding:22px 18px; border-width:4px; } .start-video { object-position:58% center; } .instructions-overlay { padding: 6px; } .instructions-image { max-height: calc(96vh - 90px); } .instructions-actions .btn { width: 100%; } }
+    </style>
+  </head>
+  <body>
+    <div class="start" id="start">
+      <video class="start-video" autoplay muted loop playsinline aria-hidden="true"><source src="assets/video_01.mp4" type="video/mp4"></video>
+      <div class="start-shade" aria-hidden="true"></div>
+      <button class="start-hotspot" type="button" onclick="showStudentForm()" aria-label="Mulai Petualangan">Mulai Petualangan</button>
+      <button class="start-teacher" type="button" onclick="openTeacherLogin()">Dashboard Guru</button>
+      <div class="start-card">
+        <h1>CONSTITUTION CHALLENGE</h1>
+        <p>
+          Jelajahi petualangan tentang perubahan UUD NRI Tahun 1945 dan selesaikan setiap misi untuk mendapatkan nilai.
+        </p>
+        <div id="landingActions">
+          <button class="btn primary" type="button" onclick="showStudentForm()">Mulai Petualangan</button>
+          <button class="btn light" type="button" onclick="openTeacherLogin()">Dasbor Guru</button>
+        </div>
+        <div class="start-fields" id="studentForm" style="display:none">
+          <label for="studentName">Nama lengkap siswa</label>
+          <input id="studentName" type="text" maxlength="100" autocomplete="name" placeholder="Masukkan nama lengkap" required />
+          <label for="studentClass">Kelas</label>
+          <input id="studentClass" type="text" maxlength="50" placeholder="Contoh: XI AK 2" required />
+          <button class="btn primary" type="button" onclick="begin()">Lanjutkan</button>
+          <button class="btn light" type="button" onclick="hideStudentForm()">Kembali</button>
+        </div>
+      </div>
+    </div>
+    <div class="instructions-overlay" id="instructionsOverlay" role="dialog" aria-modal="true" aria-label="Petunjuk pengerjaan">
+      <div class="instructions-panel">
+        <img class="instructions-image" src="assets/image_01.png" alt="Petunjuk pengerjaan dan tujuan pembelajaran" />
+        <div class="instructions-actions">
+          <button class="btn primary" type="button" onclick="startMissions()">Saya Mengerti — Mulai Misi →</button>
+        </div>
+      </div>
+    </div>
+    <div class="wrap">
+      <div class="top">
+        <h1>🧭 Constitution Challenge</h1>
+        <div class="top-actions">
+          <div class="score" id="score">Skor: 0 / 10</div>
+          <button class="btn light" onclick="openTeacherLogin()">Dasbor Guru</button>
+          <button class="btn danger" onclick="exitGame()">Keluar</button>
+        </div>
+      </div>
+      <div class="map-wrap" id="mapWrap">
+        <img class="map" id="mapImg" alt="Peta permainan" />
+        <div id="nodes"></div>
+      </div>
+      <p class="hint">
+        Klik misi yang tersedia. Misi dibuka secara berurutan setelah jawaban
+        benar.
+      </p>
+      <div class="finish" id="finish">
+        <h2>🎉 Peta Selesai!</h2>
+        <p id="finalText"></p>
+        <button class="btn primary" onclick="restart()">Main Lagi</button>
+        <button class="btn light" onclick="exitGame()">Keluar</button>
+      </div>
+    </div>
+    <div class="teacher-overlay" id="teacherOverlay" role="dialog" aria-modal="true" aria-labelledby="teacherTitle">
+      <div class="teacher-panel">
+        <h2 id="teacherTitle">📋 Dasbor Guru — Rekapan Nilai</h2>
+        <div id="teacherLoginArea">
+          <p>Masukkan PIN guru untuk membuka rekapan nilai.</p>
+          <div class="teacher-toolbar">
+            <input id="teacherPin" type="password" inputmode="numeric" placeholder="PIN guru" autocomplete="current-password" />
+            <button class="btn primary" onclick="loginTeacher()">Masuk</button>
+            <button class="btn light" onclick="closeTeacherDashboard()">Tutup</button>
+          </div>
+          <p class="teacher-note"></p>
+        </div>
+        <div id="teacherDashboardContent" style="display:none">
+          <div class="teacher-toolbar">
+            <input id="searchScores" type="search" placeholder="Cari nama atau kelas..." oninput="renderTeacherTable()" />
+            <button class="btn secondary" onclick="loadTeacherScores()">Muat ulang</button>
+            <button class="btn secondary" onclick="exportScoresCSV()">Unduh CSV</button>
+            <button class="btn danger" onclick="resetScores()">Reset data</button>
+            <button class="btn light" onclick="teacherLogout()">Keluar dari dasbor</button>
+          </div>
+          <p id="teacherStatus" class="status-msg" aria-live="polite">Memuat data...</p>
+          <div class="table-wrap">
+            <table class="scores-table">
+              <thead><tr><th>No.</th><th>Nama</th><th>Kelas</th><th>Skor</th><th>Nilai</th><th>Kategori</th><th>Status</th><th>Waktu</th></tr></thead>
+              <tbody id="teacherTableBody"><tr><td colspan="8">Belum ada data.</td></tr></tbody>
+            </table>
+          </div>
+          <p class="teacher-note">Data disimpan ke Supabase jika koneksi dan izin tabel tersedia. Jika tidak, permainan menyimpan salinan lokal di browser perangkat ini.</p>
+        </div>
+      </div>
+    </div>
+    <div class="overlay" id="overlay">
+      <div class="panel">
+        <h2 id="stageTitle">Misi</h2>
+        <img class="stim" id="stim" alt="Stimulus soal" style="display: none" />
+        <div class="question" id="question"></div>
+        <div class="answers" id="answers"></div>
+        <div class="feedback" id="feedback" aria-live="polite"></div>
+        <div class="actions">
+          <button class="btn primary" id="check" onclick="checkAnswer()">
+            Periksa Jawaban</button
+          ><button
+            class="btn light"
+            id="retry"
+            onclick="retryAnswer()"
+            style="display: none"
+          >
+            Coba Lagi</button
+          ><button
+            class="btn"
+            id="continue"
+            onclick="nextStage()"
+            style="display: none"
+          >
+            Lanjutkan →</button
+          ><button class="btn light" onclick="closeModal()">Tutup</button>
+        </div>
+        <p class="small">
+          Versi HTML mandiri berdasarkan konfigurasi konten H5P. Mekanisme
+          dibuat ulang dan tidak menjalankan pustaka internal H5P.
+        </p>
+      </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+      const GAME = {
+        title: "CONSTITUTION CHALLENGE",
+        background:
+          "assets/image_02.png",
+        stages: [
+          {
+            label: "Misi 1",
+            x: 74.60434265096359,
+            y: 76.32284563704471,
+            question:
+              "Jika tuntutan Reformasi tersebut dihubungkan dengan perubahan UUD, perubahan konstitusi dapat dipahami sebagai salah satu upaya memperbaiki sistem ketatanegaraan Indonesia.",
+            stimulus:
+              "assets/image_03.png",
+            type: "tf",
+            options: [],
+            correct: true,
+          },
+          {
+            label: "Misi 2",
+            x: 48.605859605930824,
+            y: 74.31434969922773,
+            question:
+              "Berdasarkan perbandingan kedua pendapat tersebut dengan ketentuan UUD NRI Tahun 1945, pendapat Andi lebih tepat karena DPR merupakan lembaga legislatif",
+            stimulus:
+              "assets/image_04.png",
+            type: "choice",
+            options: [
+              { text: "Benar", correct: false },
+              { text: "Salah", correct: true },
+            ],
+            correct: null,
+          },
+          {
+            label: "Misi  3",
+            x: 77.9954491350983,
+            y: 56.237886258875044,
+            question:
+              "Jika urutan waktu tersebut dianalisis, dapat disimpulkan bahwa perubahan UUD NRI Tahun 1945 dilakukan secara bertahap sebanyak empat kali.",
+            stimulus:
+              "assets/image_05.png",
+            type: "media",
+            options: [
+              {
+                image:
+                  "assets/image_06.png",
+                correct: true,
+              },
+              {
+                image:
+                  "assets/image_07.png",
+                correct: false,
+              },
+            ],
+            correct: null,
+          },
+          {
+            label: "Misi 4",
+            x: 38.432540153526695,
+            y: 60.254878134508985,
+            question:
+              "Karena usulan berasal dari anggota MPR, perubahan tersebut tetap sah meskipun persyaratan perubahan UUD tidak dipenuhi.",
+            stimulus:
+              "assets/image_08.png",
+            type: "tf",
+            options: [],
+            correct: false,
+          },
+          {
+            label: "Misi 5",
+            x: 84.77766210336773,
+            y: 44.18691063197325,
+            question:
+              "Jika ketentuan tersebut dihubungkan dengan prinsip pembatasan kekuasaan, perubahan tersebut menunjukkan bahwa masa kekuasaan Presiden dan Wakil Presiden tidak dapat berlangsung tanpa batas periode",
+            stimulus:
+              "assets/image_09.png",
+            type: "media",
+            options: [
+              {
+                image:
+                  "assets/image_06.png",
+                correct: true,
+              },
+              {
+                image:
+                  "assets/image_07.png",
+                correct: false,
+              },
+            ],
+            correct: null,
+          },
+          {
+            label: "Misi 6",
+            x: 51.996966090065534,
+            y: 42.17841469415629,
+            question:
+              "Sebelum perubahan UUD, Presiden dan Wakil Presiden dipilih oleh MPR. Setelah perubahan UUD, keduanya dipilih secara langsung oleh rakyat",
+            stimulus:
+              "assets/image_10.png",
+            type: "choice",
+            options: [
+              { text: "Benar", correct: true },
+              { text: "Salah", correct: false },
+            ],
+            correct: null,
+          },
+          {
+            label: "Misi 7",
+            x: 89.29913741554734,
+            y: 26.11044719162056,
+            question:
+              "Berdasarkan perbandingan kedua kondisi tersebut, MPR setelah perubahan UUD tetap menjadi lembaga tertinggi yang memiliki kekuasaan tidak terbatas atas semua lembaga negara",
+            stimulus:
+              "assets/image_11.png",
+            type: "tf",
+            options: [],
+            correct: false,
+          },
+          {
+            label: "Misi 8",
+            x: 81.38655561923302,
+            y: 10.04247968908483,
+            question:
+              "Berdasarkan hubungan kedua informasi tersebut, perubahan UUD NRI Tahun 1945 tidak dapat diartikan sebagai perubahan terhadap Pancasila sebagai dasar negara",
+            stimulus:
+              "assets/image_12.png",
+            type: "choice",
+            options: [
+              { text: "Benar", correct: true },
+              { text: "Salah", correct: false },
+            ],
+            correct: null,
+          },
+          {
+            label: "Misi 9",
+            x: 36.17180249743689,
+            y: 22.093455315986624,
+            question:
+              "Perubahan sistem ketatanegaraan tersebut berarti Indonesia berubah dari negara kesatuan menjadi negara federal",
+            stimulus:
+              "assets/image_13.png",
+            type: "media",
+            options: [
+              {
+                image:
+                  "assets/image_06.png",
+                correct: false,
+              },
+              {
+                image:
+                  "assets/image_07.png",
+                correct: true,
+              },
+            ],
+            correct: null,
+          },
+          {
+            label: "Misi 10",
+            x: 48.605859605930824,
+            y: 4.016991875633932,
+            question:
+              "Jika kedua perubahan tersebut dianalisis secara bersama-sama, dapat disimpulkan bahwa perubahan UUD antara lain berkaitan dengan peningkatan partisipasi rakyat dan pembatasan kekuasaan",
+            stimulus:
+              "assets/image_14.png",
+            type: "tf",
+            options: [],
+            correct: true,
+          },
+        ],
+      };
+      let done = new Set(),
+        current = -1,
+        selected = null,
+        checked = false;
+      const SUPABASE_URL = "https://riboqmxxfrsjlphsfout.supabase.co";
+      const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_mtQ-moOsj1fe59nm7ZB4oQ_KmjeI_6F";
+      const TEACHER_PIN = "160201";
+      const supabaseClient = window.supabase?.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+      let studentName = "", studentClass = "", attemptSaved = false, teacherRecords = [];
+      const LOCAL_SCORE_KEY = "constitution_challenge_scores_v1";
+      document.getElementById("mapImg").src = GAME.background;
+
+      function cleanText(value) { return String(value || "").trim().replace(/\s+/g, " "); }
+      function scoreCategory(score) {
+        if (score >= 90) return "Sangat Baik";
+        if (score >= 80) return "Baik";
+        if (score >= 75) return "Cukup";
+        return "Bimbingan";
+      }
+      function getLocalScores() {
+        try { return JSON.parse(localStorage.getItem(LOCAL_SCORE_KEY) || "[]"); }
+        catch { return []; }
+      }
+      function saveLocalScore(record) {
+        const records = getLocalScores();
+        records.unshift(record);
+        localStorage.setItem(LOCAL_SCORE_KEY, JSON.stringify(records));
+      }
+      function makeStudentKey() {
+        return (studentName + "::" + studentClass).toLocaleLowerCase("id-ID").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9:]+/g, "-").slice(0, 180);
+      }
+      function showStudentForm() {
+        const card = document.querySelector(".start-card");
+        card.classList.add("form-open");
+        document.getElementById("landingActions").style.display = "none";
+        document.getElementById("studentForm").style.display = "grid";
+        document.getElementById("studentName").focus();
+      }
+      function hideStudentForm() {
+        const card = document.querySelector(".start-card");
+        card.classList.remove("form-open");
+        document.getElementById("studentForm").style.display = "none";
+        document.getElementById("landingActions").style.display = "block";
+      }
+      async function begin() {
+        studentName = cleanText(document.getElementById("studentName").value);
+        studentClass = cleanText(document.getElementById("studentClass").value);
+        if (!studentName || !studentClass) {
+          alert("Nama lengkap dan kelas wajib diisi sebelum mulai.");
+          return;
+        }
+        if (studentName.length < 2 || studentClass.length < 1) {
+          alert("Periksa kembali nama dan kelas yang diisi."); return;
+        }
+        attemptSaved = false;
+        if (supabaseClient) {
+          try {
+            const { data, error } = await supabaseClient.from("student_scores").select("id").eq("student_key", makeStudentKey()).maybeSingle();
+            if (!error && data) {
+              alert("Nama dan kelas ini sudah memiliki rekapan nilai. Hubungi guru jika perlu mengulang.");
+              return;
+            }
+          } catch (e) { console.warn("Pemeriksaan rekapan online gagal; permainan tetap dapat dimulai.", e); }
+        }
+        // Tampilkan gambar petunjuk setelah nama dan kelas tervalidasi,
+        // sebelum peserta didik masuk ke peta misi.
+        document.getElementById("start").style.display = "none";
+        document.getElementById("finish").style.display = "none";
+        document.getElementById("instructionsOverlay").style.display = "flex";
+      }
+      function startMissions() {
+        document.getElementById("instructionsOverlay").style.display = "none";
+        document.getElementById("finish").style.display = "none";
+        renderNodes();
+      }
+      function renderNodes() {
+        const host = document.getElementById("nodes");
+        host.innerHTML = "";
+        GAME.stages.forEach((s, i) => {
+          let b = document.createElement("button");
+          b.className =
+            "node " +
+            (done.has(i) ? "done" : i === 0 || done.has(i - 1) ? "open" : "");
+          b.textContent = i + 1;
+          b.style.left = s.x + "%";
+          b.style.top = s.y + "%";
+          b.disabled = !(i === 0 || done.has(i - 1) || done.has(i));
+          b.title = s.label;
+          b.onclick = () => openStage(i);
+          host.appendChild(b);
+        });
+        document.getElementById("score").textContent =
+          `Skor: ${done.size} / ${GAME.stages.length}`;
+        if (done.size === GAME.stages.length) {
+          document.getElementById("finish").style.display = "block";
+          document.getElementById("finalText").textContent =
+            `${studentName} (${studentClass}), kamu berhasil menyelesaikan ${done.size} dari ${GAME.stages.length} misi. Nilai: ${Math.round(done.size / GAME.stages.length * 100)}.`;
+          saveCurrentScore("Selesai");
+        }
+      }
+      function openStage(i) {
+        current = i;
+        selected = null;
+        checked = false;
+        let s = GAME.stages[i];
+        document.getElementById("stageTitle").textContent = s.label;
+        document.getElementById("question").textContent = s.question;
+        let im = document.getElementById("stim");
+        if (s.stimulus) {
+          im.src = s.stimulus;
+          im.style.display = "block";
+        } else im.style.display = "none";
+        let host = document.getElementById("answers");
+        host.innerHTML = "";
+        let opts =
+          s.type === "tf"
+            ? [
+                { text: "Benar", correct: s.correct },
+                { text: "Salah", correct: !s.correct },
+              ]
+            : s.options;
+        opts.forEach((o, j) => {
+          let b = document.createElement("button");
+          b.className = "ans";
+          if (o.image) {
+            let img = document.createElement("img");
+            img.src = o.image;
+            img.alt = "Pilihan " + (j + 1);
+            b.appendChild(img);
+          } else b.textContent = o.text;
+          b.onclick = () => {
+            if (checked) return;
+            selected = j;
+            [...host.children].forEach((x) => x.classList.remove("selected"));
+            b.classList.add("selected");
+          };
+          host.appendChild(b);
+        });
+        document.getElementById("feedback").textContent = "";
+        document.getElementById("feedback").className = "feedback";
+        document.getElementById("check").style.display = "inline-block";
+        document.getElementById("retry").style.display = "none";
+        document.getElementById("continue").style.display = "none";
+        document.getElementById("overlay").style.display = "flex";
+      }
+      function playFeedbackSound(isCorrect, missionIndex = 0) {
+        // Beberapa variasi bunyi agar umpan balik tidak monoton di setiap misi.
+        try {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (!AudioCtx) return;
+          const ctx = new AudioCtx();
+          const correctPatterns = [
+            [659, 784, 988, 1047, 1319],
+            [523, 659, 784, 1047, 1319],
+            [784, 988, 1175, 1319, 1568],
+            [659, 659, 784, 988, 1319],
+            [523, 784, 1047, 1319, 1568],
+            [587, 740, 880, 1175, 1480],
+            [784, 784, 988, 1175, 1568],
+            [659, 831, 988, 1245, 1568],
+            [523, 659, 880, 1047, 1397],
+            [698, 880, 1047, 1397, 1760],
+          ];
+          const wrongPatterns = [
+            [330, 262],
+            [294, 220, 196],
+            [392, 330],
+            [262, 220, 175],
+            [349, 294, 233],
+            [311, 247, 196],
+            [440, 349],
+            [330, 247, 196],
+            [370, 294, 220],
+            [392, 311, 247],
+          ];
+          const patterns = isCorrect ? correctPatterns : wrongPatterns;
+          // Setiap misi memakai melodi khusus yang tetap: Misi 1 berbeda dari Misi 2, dan seterusnya.
+          // Tidak diacak agar setiap nomor misi selalu memiliki suara khas yang konsisten.
+          let patternIndex =
+            ((missionIndex % patterns.length) + patterns.length) %
+            patterns.length;
+          const melody = patterns[patternIndex];
+          const step = isCorrect
+            ? 0.105 + (patternIndex % 4) * 0.018
+            : 0.16 + (patternIndex % 4) * 0.025;
+          melody.forEach((freq, i) => {
+            const start = ctx.currentTime + i * step;
+            const osc = ctx.createOscillator(),
+              gain = ctx.createGain();
+            const correctWaves = [
+              "sawtooth",
+              "square",
+              "triangle",
+              "sawtooth",
+              "square",
+              "triangle",
+              "sawtooth",
+              "square",
+              "triangle",
+              "sawtooth",
+            ];
+            const wrongWaves = [
+              "triangle",
+              "sine",
+              "square",
+              "triangle",
+              "sine",
+              "square",
+              "triangle",
+              "sine",
+              "square",
+              "triangle",
+            ];
+            osc.type = isCorrect
+              ? correctWaves[patternIndex]
+              : wrongWaves[patternIndex];
+            osc.frequency.setValueAtTime(freq, start);
+            if (isCorrect)
+              osc.frequency.linearRampToValueAtTime(
+                freq * (1.004 + (patternIndex % 5) * 0.002),
+                start + 0.075,
+              );
+            gain.gain.setValueAtTime(0.0001, start);
+            gain.gain.exponentialRampToValueAtTime(
+              isCorrect ? 0.075 : 0.11,
+              start + 0.025,
+            );
+            gain.gain.setValueAtTime(
+              (isCorrect ? 0.075 : 0.11) * 0.7,
+              start + 0.075,
+            );
+            gain.gain.exponentialRampToValueAtTime(
+              0.0001,
+              start + (isCorrect ? 0.16 : 0.17),
+            );
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(start);
+            osc.stop(start + (isCorrect ? 0.18 : 0.19));
+          });
+          if (isCorrect) {
+            // Kilau simbal/terompet pendek di akhir fanfare.
+            const length = Math.floor(ctx.sampleRate * 0.18),
+              buffer = ctx.createBuffer(1, length, ctx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < length; i++)
+              data[i] = (Math.random() * 2 - 1) * (1 - i / length);
+            const noise = ctx.createBufferSource(),
+              filter = ctx.createBiquadFilter(),
+              gain = ctx.createGain();
+            noise.buffer = buffer;
+            filter.type = "highpass";
+            filter.frequency.value = 4800;
+            const t = ctx.currentTime + melody.length * step;
+            gain.gain.setValueAtTime(0.0001, t);
+            gain.gain.exponentialRampToValueAtTime(0.09, t + 0.025);
+            gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
+            noise.connect(filter);
+            filter.connect(gain);
+            gain.connect(ctx.destination);
+            noise.start(t);
+            noise.stop(t + 0.21);
+          }
+          setTimeout(
+            () => ctx.close(),
+            Math.ceil((melody.length * step + 0.5) * 1000),
+          );
+        } catch (e) {
+          /* Permainan tetap berjalan jika audio tidak didukung. */
+        }
+      }
+
+      function checkAnswer() {
+        if (selected === null) {
+          document.getElementById("feedback").textContent =
+            "Pilih jawaban terlebih dahulu.";
+          return;
+        }
+        checked = true;
+        let s = GAME.stages[current],
+          opts =
+            s.type === "tf"
+              ? [{ correct: s.correct }, { correct: !s.correct }]
+              : s.options;
+        let good = !!opts[selected].correct;
+        let fb = document.getElementById("feedback");
+        fb.textContent = good
+          ? "Benar! Misi berhasil diselesaikan."
+          : "Belum tepat. Coba periksa kembali dan ulangi jawaban.";
+        fb.className = "feedback " + (good ? "good" : "bad");
+        playFeedbackSound(good, current);
+        document.getElementById("check").style.display = "none";
+        if (good) {
+          done.add(current);
+          document.getElementById("continue").style.display = "inline-block";
+          renderNodes();
+        } else document.getElementById("retry").style.display = "inline-block";
+      }
+      function retryAnswer() {
+        checked = false;
+        selected = null;
+        document
+          .querySelectorAll(".ans")
+          .forEach((b) => b.classList.remove("selected"));
+        document.getElementById("feedback").textContent =
+          "Silakan pilih jawaban lagi.";
+        document.getElementById("check").style.display = "inline-block";
+        document.getElementById("retry").style.display = "none";
+      }
+      function nextStage() {
+        closeModal();
+        renderNodes();
+        if (done.size === GAME.stages.length)
+          document
+            .getElementById("finish")
+            .scrollIntoView({ behavior: "smooth" });
+      }
+      function closeModal() {
+        document.getElementById("overlay").style.display = "none";
+      }
+      function restart() {
+        if (!confirm("Mulai ulang permainan? Rekapan percobaan sebelumnya tetap tersimpan.")) return;
+        done.clear();
+        attemptSaved = false;
+        document.getElementById("finish").style.display = "none";
+        renderNodes();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+
+      async function saveCurrentScore(statusLabel = "Keluar") {
+        if (attemptSaved || !studentName || !studentClass) return;
+        attemptSaved = true;
+        const score = Math.round(done.size / GAME.stages.length * 100);
+        const record = {
+          student_key: makeStudentKey(), nama: studentName, kelas: studentClass,
+          avatar: "student", skor: score, kategori: scoreCategory(score),
+          status: score >= 75 ? "Tuntas" : "Belum Tuntas",
+          waktu: statusLabel + " — " + done.size + "/" + GAME.stages.length + " misi",
+          created_at: new Date().toISOString()
+        };
+        saveLocalScore(record);
+        if (supabaseClient) {
+          try {
+            let { error } = await supabaseClient.from("student_scores").insert([{
+              student_key: record.student_key, nama: record.nama, kelas: record.kelas, avatar: record.avatar,
+              skor: record.skor, kategori: record.kategori, status: record.status, waktu: record.waktu
+            }]);
+            if (error && /kelas|column/i.test(error.message || "")) {
+              const retry = await supabaseClient.from("student_scores").insert([{
+                student_key: record.student_key, nama: record.nama, avatar: record.avatar,
+                skor: record.skor, kategori: record.kategori, status: record.status, waktu: record.waktu
+              }]);
+              error = retry.error;
+            }
+            if (error) throw error;
+            console.info("Nilai berhasil disimpan ke Supabase.");
+          } catch (error) {
+            console.error("Gagal menyimpan ke Supabase; salinan lokal tersedia.", error);
+            alert("Nilai tersimpan di browser ini, tetapi belum berhasil dikirim ke database online. Periksa tabel student_scores dan izin Supabase.");
+          }
+        }
+      }
+
+      async function exitGame() {
+        if (studentName && !attemptSaved && done.size > 0) {
+          if (!confirm("Keluar sekarang? Skor sementara akan direkap.")) return;
+          await saveCurrentScore("Keluar sebelum selesai");
+        } else if (studentName && done.size === 0) {
+          if (!confirm("Keluar dari permainan?")) return;
+        }
+        document.getElementById("overlay").style.display = "none";
+        document.getElementById("instructionsOverlay").style.display = "none";
+        document.getElementById("start").style.display = "flex";
+        document.getElementById("studentName").value = "";
+        document.getElementById("studentClass").value = "";
+        studentName = ""; studentClass = "";
+        done.clear(); current = -1; selected = null; checked = false; attemptSaved = false;
+        document.getElementById("finish").style.display = "none";
+        renderNodes();
+      }
+
+      function openTeacherLogin() {
+        document.getElementById("teacherOverlay").style.display = "flex";
+        document.getElementById("teacherLoginArea").style.display = "block";
+        document.getElementById("teacherDashboardContent").style.display = "none";
+        document.getElementById("teacherPin").value = "";
+        setTimeout(() => document.getElementById("teacherPin").focus(), 0);
+      }
+      function closeTeacherDashboard() { document.getElementById("teacherOverlay").style.display = "none"; }
+      async function loginTeacher() {
+        if (document.getElementById("teacherPin").value !== TEACHER_PIN) {
+          alert("PIN guru salah."); return;
+        }
+        document.getElementById("teacherLoginArea").style.display = "none";
+        document.getElementById("teacherDashboardContent").style.display = "block";
+        await loadTeacherScores();
+      }
+      function teacherLogout() {
+        document.getElementById("teacherDashboardContent").style.display = "none";
+        document.getElementById("teacherLoginArea").style.display = "block";
+        document.getElementById("teacherPin").value = "";
+      }
+      async function loadTeacherScores() {
+        const status = document.getElementById("teacherStatus");
+        status.textContent = "Memuat rekapan nilai...";
+        let onlineRecords = null;
+        if (supabaseClient) {
+          try {
+            const { data, error } = await supabaseClient.from("student_scores")
+              .select("id, student_key, nama, kelas, avatar, skor, kategori, status, waktu, created_at")
+              .order("created_at", { ascending: false });
+            if (error) throw error;
+            onlineRecords = (data || []).map(r => ({ ...r, kelas: r.kelas || extractClassFromKey(r.student_key) }));
+          } catch (error) { console.error(error); }
+        }
+        teacherRecords = onlineRecords !== null ? onlineRecords : getLocalScores();
+        if (onlineRecords === null) status.textContent = "Tidak dapat mengambil data online. Menampilkan data lokal pada browser ini.";
+        else status.textContent = `Berhasil memuat ${teacherRecords.length} rekapan dari database online.`;
+        renderTeacherTable();
+      }
+      function extractClassFromKey(key) {
+        const local = getLocalScores().find(r => r.student_key === key);
+        if (local?.kelas) return local.kelas;
+        const parts = String(key || "").split("::");
+        return parts.length > 1 ? parts.slice(1).join("::").replace(/-/g, " ") : "-";
+      }
+      function renderTeacherTable() {
+        const tbody = document.getElementById("teacherTableBody");
+        const query = cleanText(document.getElementById("searchScores").value).toLocaleLowerCase("id-ID");
+        const filtered = teacherRecords.filter(r => `${r.nama || ""} ${r.kelas || extractClassFromKey(r.student_key) || ""}`.toLocaleLowerCase("id-ID").includes(query));
+        if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="8">Tidak ada rekapan yang cocok.</td></tr>'; return; }
+        tbody.innerHTML = "";
+        filtered.forEach((r, i) => {
+          const tr = document.createElement("tr");
+          const vals = [i + 1, r.nama || "-", r.kelas || extractClassFromKey(r.student_key), Number(r.skor || 0) + (Number(r.skor || 0) <= 10 ? "/10" : "/100"), Number(r.skor || 0) <= 10 ? Math.round(Number(r.skor || 0) * 10) : Number(r.skor || 0), r.kategori || scoreCategory(Number(r.skor || 0)), r.status || "-", formatScoreDate(r.created_at)];
+          vals.forEach(v => { const td = document.createElement("td"); td.textContent = String(v ?? "-"); tr.appendChild(td); });
+          tbody.appendChild(tr);
+        });
+      }
+      function formatScoreDate(value) {
+        if (!value) return "-";
+        const d = new Date(value);
+        return Number.isNaN(d.getTime()) ? String(value) : d.toLocaleString("id-ID");
+      }
+      function exportScoresCSV() {
+        if (!teacherRecords.length) { alert("Belum ada rekapan untuk diunduh."); return; }
+        const headers = ["Nama", "Kelas", "Skor", "Nilai", "Kategori", "Status", "Waktu", "Tanggal"];
+        const rows = teacherRecords.map(r => [r.nama, r.kelas || extractClassFromKey(r.student_key), r.skor, Number(r.skor || 0) <= 10 ? Number(r.skor || 0) * 10 : r.skor, r.kategori, r.status, r.waktu, r.created_at]);
+        const esc = v => '"' + String(v ?? "").replace(/"/g, '""') + '"';
+        const csv = "\uFEFF" + [headers, ...rows].map(row => row.map(esc).join(",")).join("\r\n");
+        const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8;" }));
+        const a = document.createElement("a"); a.href = url; a.download = "rekapan_constitution_challenge.csv"; a.click(); URL.revokeObjectURL(url);
+      }
+      async function resetScores() {
+        if (!confirm("Hapus seluruh rekapan nilai? Tindakan ini tidak dapat dibatalkan.")) return;
+        localStorage.removeItem(LOCAL_SCORE_KEY);
+        if (supabaseClient) {
+          try {
+            const { error } = await supabaseClient.from("student_scores").delete().not("id", "is", null);
+            if (error) throw error;
+          } catch (error) {
+            alert("Data lokal dihapus, tetapi database online gagal di-reset. Periksa kebijakan DELETE Supabase.");
+            console.error(error);
+          }
+        }
+        await loadTeacherScores();
+        alert("Proses reset selesai. Jika masih ada data online, periksa izin DELETE pada Supabase.");
+      }
+      document.getElementById("teacherPin").addEventListener("keydown", e => { if (e.key === "Enter") loginTeacher(); });
+    </script>
+  </body>
+</html>
